@@ -140,6 +140,7 @@ typedef struct ProteinFamily ProteinFamily;
 struct ProteinFamily 
 {
     int N_members;
+    int id;
     Protein *first_protein;
     Protein *last_protein;
     ProteinFamily *next_family;  
@@ -148,14 +149,15 @@ struct ProteinFamily
 
 typedef struct Protein Protein;
 struct Protein
-{
+{    
     int N_members;
+    int id;
     Gene *first_gene;
     Gene *las_gene;
     Protein *next_protein_in_family;
     Protein *next_protein_in_proteome;
     Protein *next_empty_protein;
-    ProteinFamily *which_family;
+    ProteinFamily *which_protein_family;
     int protein_identity;
     float Kd;
     char tf_seq_rc[TF_ELEMENT_LEN];
@@ -165,17 +167,19 @@ struct Protein
 typedef struct Gene Gene;
 struct Gene 
 {
+    int id;
     Gene *next_gene_in_CiSRegFamily;
-    Gene *next_gene_in_Protein;
+    Gene *next_gene_making_Protein;
     Gene *next_gene_in_genome;
     Gene *next_empty_gene;
-    CisRegFamily *which_family;
+    CisRegFamily *which_cisreg_family;
     Protein *which_protein;
     float locus_length;
     float mRNA_decay_rate;
     float protein_decay_rate;
     float translation_rate;
     float active_to_intermediate_rate;
+    char cisreg_seq[CISREG_LEN];
 };
 
 typedef struct CisRegFamily CisRegFamily;
@@ -212,13 +216,14 @@ struct Genotype {
     
     Gene *genome;
     Protein *proteome;
-    ProteinFamily *functional_group;
-    CisRegFamily *regulon; 
+    ProteinFamily *protein_family;
+    CisRegFamily *cisreg_family; 
     
     Protein *effector;
-    Protein *empty_protein;
-    ProteinFamily *empty_functional_group;
-    CisRegFamily *empty_CisRegFamily;
+    Gene *last_empty_gene;    
+    Protein *last_empty_protein;
+    ProteinFamily *last_empty_protein_family;
+    CisRegFamily *last_empty_CisRegFamily;
     
     /*these apply to protein, not loci*/
     int N_act;                                              /* number of activators*/ 

@@ -360,6 +360,138 @@ void mut_whole_gene_deletion(Genotype *genotype, Mutation *mut_record, RngStream
     genotype->ngenes--;
 }
 
+void mut_whole_gene_deletion2(Genotype *genotype, Mutation *mut_record, RngStream RS)
+{    
+    int which_gene;
+    int protein_id, N_gene_of_selection_protein, puppet_gene,position_of_puppet_gene;   
+    Gene *target_gene,*gene;
+    Protein *target_protein,*protein;
+    ProteinFamily *target_protein_family,*protein_family;
+    CisRegFamily *target_cisreg_family, *cisreg_family;
+    /* check which genes can be deleted*/   
+    N_gene_of_selection_protein=genotype->protein_pool[genotype->nproteins-1][0][0]; //does the effector gene have multipe copies   
+    if(genotype->ntfgenes-N_SIGNAL_TF>1)//if there are more than one copies of genes of non-sensor TF  
+    {
+        if(N_gene_of_selection_protein==1)//if the effector have only one copies
+        {
+            protein_id=genotype->nproteins-1;
+            while(protein_id==genotype->nproteins-1) //the last copy of the effector cannot be deleted. choose a different gene
+            {   
+                which_gene=RngStream_RandInt(RS,N_SIGNAL_TF,genotype->ngenes-1);
+                protein_id=genotype->which_protein[which_gene];
+            }
+        }
+        else //otherwise any gene can be deleted
+            which_gene=RngStream_RandInt(RS,N_SIGNAL_TF,genotype->ngenes-1);
+    }
+    else //if there's only one copy of non-sensor TF gene
+    {        
+        while(1)
+        {
+            which_gene=RngStream_RandInt(RS,N_SIGNAL_TF,genotype->ngenes-1);
+            protein_id=genotype->which_protein[which_gene];
+            if(protein_id==genotype->nproteins-1)//obviously we can only delete a copy of the effector gene
+                break;                           //it's impossible for deletion when the non-sensor TF and the effector each has only one copy
+                                                 //function draw_mutation would have set deletion rate to 0 in such a case
+        }
+    }
+    /*record mutation info*/
+    mut_record->which_gene=which_gene; 
+    
+    /**********************************/
+    gene=genotype->genome;
+    while(gene->next_gene_in_genome->id=which_gene)
+        gene=gene->next_gene_in_genome;
+    target_gene=gene->next_gene_in_genome;
+    gene->next_gene_in_genome=target_gene->next_gene_in_genome;
+    gene=gene->next_gene_in_genome;
+    while(gene!=NULL)
+        gene->id--;
+    
+    /*add target to waste*/
+    if(genotype->last_empty_gene!=NULL)
+        genotype->last_empty_gene->next_empty_gene=target_gene;
+    else    
+        genotype->last_empty_gene=target_gene;
+    
+    /*deal with proteins*/
+    target_protein=target_gene->which_protein;
+    if(target_protein->N_members==1)//protein has only gene
+    {
+        /*we need to delete targe protein as well*/
+        target_protein_family=target_protein->which_protein_family;
+        if(target_protein_family->N_members==1) // family has only one protein
+        {
+            /*we need to delete target protein family*/
+            if(genotype->last_empty_protein_family!=NULL)
+                genotype->last_empty_protein_family->next_empty_family=target_protein_family;
+            else
+                genotype->last_empty_protein_family=target_protein_family;
+            protein_family=genotype->protein_family;
+            while(protein_family->next_family!=target_protein_family)
+                protein_family=protein_family->next_family;
+            protein_family=target_protein_family->next_family;
+            protein_family=protein_family->next_family;
+            while(protein_family!=NULL)
+                protein_family->id--;            
+        }
+        else
+        {
+            if(target_protein_family->first_protein==target_protein)
+                target_protein_family=target_protein->next_protein_in_family;
+            else                
+            {
+                protein=target_protein_family->first_protein;
+                while(protein->next_protein_in_family!=target_protein)
+                    protein=protein->next_protein_in_family;
+                protein->next_protein_in_family=target_protein->next_protein_in_proteome;
+            }
+        }
+        
+        if(genotype->last_empty_protein==NULL)
+            genotype->last_empty_protein=target_protein;
+        else
+            genotype->last_empty_protein=
+        
+        protein=genotype->proteome;
+        while(protein->next_protein_in_proteome!=target_protein)/*by default the signal, i.e the first protein, cannot be deleted*/
+            protein=protein->next_protein_in_proteome;
+        protein->next_protein_in_proteome=target_protein->next_protein_in_proteome;        
+        protein=protein->next_protein_in_family;
+        while(protein!=NULL)
+            protein->id--;  
+    }
+    else
+    {
+        gene=target_protein->first_gene;
+        while(gene->next_gene_making_Protein!=target_gene)
+            gene=gene->next_gene_making_Protein;
+        gene->next_gene_making_Protein=target_gene->next_gene_making_Protein;
+        gene=genotype->genome;
+        while(gene->next_gene_in_genome!=target_gene)
+            gene=gene->next_gene_making_Protein;
+        gene->next_gene_making_Protein=target_gene->next_gene_making_Protein;      
+    }  
+    
+    /*deal with cisreg family*/
+    target_cisreg_family=target_gene->which_cisreg_family;
+    if(target_cisreg_family->N_members==1)
+    {
+        cisreg_family=genotype->cisreg_family;        
+        while(cisreg_family!=NULL)
+            cisreg_family=cisreg_family->next_family;
+        cisreg_family->next_family=target_cisreg_family->next_family;
+        cisreg_family=cisreg_family->next_family;
+        while(cisreg_family!=NULL)
+            cisreg_family->id--;
+    }
+    else
+    {
+        
+    }    
+}
+
+
 void reproduce_whole_gene_deletion(Genotype *genotype, Mutation *mut_record) // any gene can be deleted
 {    
     int which_gene, offset, i,j, cisreg_seq_cluster_id, cisreg_seq_cluster_id_copy,puppet_gene,position_of_puppet_gene;
