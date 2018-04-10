@@ -5688,3 +5688,53 @@ void print_mutatable_parameters(Genotype *genotype)
     }
     fclose(fp);
 }
+
+void make_meta_genotype(Genotype *genotype)
+{
+    int i,j,which_protein;
+    Gene *gene_id;
+    Protein *protein_id;
+    ProteinFamily *family_id;
+    
+    /*make protein_family*/
+    family_id=genotype->functional_group;
+    for(i=0;i<genotype->N_protein_family;i++)
+    {
+        genotype->TF_family_pool[i][0][0]=family_id->N_members;
+        protein_id
+        for(j=0;j<family_id->N_members;j++)
+        {
+            genotype->TF_family_pool[i][1][0][j]=1;
+        }
+    }
+    
+    /**/
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /*make protein_pool, which_protein */
+    for(i=0;i<NPROTEINS;i++)
+    {
+        genotype->protein_pool[i][0][0]=0;
+        for(j=0;j<NGENES;j++)
+            genotype->protein_pool[i][1][j]=NA;
+    }
+    for(i=0;i<NGENES;i++)
+    {
+        genotype->which_protein[i]=NA;            
+    }
+    i=0;
+    which_gene=genotype->genome;
+    while(i<genotype->ngenes)
+    {    
+        which_protein=which_gene->protein_id;
+        genotype->protein_pool[which_protein][1][genotype->protein_pool[which_protein]]
+    }    
+}

@@ -136,6 +136,60 @@ struct AllTFBindingSites {
   int N_hindered;    /* the number of BS hindered by this TF when it binds to the current BS */  
 };
 
+typedef struct ProteinFamily ProteinFamily;
+struct ProteinFamily 
+{
+    int N_members;
+    Protein *first_protein;
+    Protein *last_protein;
+    ProteinFamily *next_family;  
+    ProteinFamily *next_empty_family;
+};
+
+typedef struct Protein Protein;
+struct Protein
+{
+    int N_members;
+    Gene *first_gene;
+    Gene *las_gene;
+    Protein *next_protein_in_family;
+    Protein *next_protein_in_proteome;
+    Protein *next_empty_protein;
+    ProteinFamily *which_family;
+    int protein_identity;
+    float Kd;
+    char tf_seq_rc[TF_ELEMENT_LEN];
+    char tf_seq[TF_ELEMENT_LEN];
+};
+
+typedef struct Gene Gene;
+struct Gene 
+{
+    Gene *next_gene_in_CiSRegFamily;
+    Gene *next_gene_in_Protein;
+    Gene *next_gene_in_genome;
+    Gene *next_empty_gene;
+    CisRegFamily *which_family;
+    Protein *which_protein;
+    float locus_length;
+    float mRNA_decay_rate;
+    float protein_decay_rate;
+    float translation_rate;
+    float active_to_intermediate_rate;
+};
+
+typedef struct CisRegFamily CisRegFamily;
+struct CisRegFamily
+{
+    int N_members;
+    Gene *first_gene;
+    Gene *last_gene;
+    CisRegFamily *next_family;
+    CisRegFamily *next_empty_family;
+    int min_N_activator_to_transc;    
+};
+
+
 typedef struct Genotype Genotype;
 struct Genotype {
     /*basic variables*/
@@ -152,6 +206,19 @@ struct Genotype {
                                                              * We use this array and TF_family_pool to track which TF belongs which TF family.
                                                              */
     char cisreg_seq[NGENES][CISREG_LEN];    
+    
+    /*Gene*/
+    int N_protein_family;
+    
+    Gene *genome;
+    Protein *proteome;
+    ProteinFamily *functional_group;
+    CisRegFamily *regulon; 
+    
+    Protein *effector;
+    Protein *empty_protein;
+    ProteinFamily *empty_functional_group;
+    CisRegFamily *empty_CisRegFamily;
     
     /*these apply to protein, not loci*/
     int N_act;                                              /* number of activators*/ 
@@ -698,4 +765,6 @@ void remove_binding_sites(Genotype *, int);
 void calc_leaping_interval(Genotype*, CellState*, float *, float, int);
 
 void print_mutatable_parameters(Genotype*);
+
+void make_meta_genotype(Genotype *);
 #endif /* !FILE_NETSIM_SEEN */
